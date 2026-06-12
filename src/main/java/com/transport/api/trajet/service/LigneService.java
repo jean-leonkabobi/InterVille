@@ -1,0 +1,81 @@
+package com.transport.api.trajet.service;
+
+import com.transport.api.context.TenantContext;
+import com.transport.api.common.exception.ResourceNotFoundException;
+import com.transport.api.trajet.dto.LigneCreateRequest;
+import com.transport.api.trajet.dto.LigneDto;
+import com.transport.api.trajet.entity.Ligne;
+import com.transport.api.trajet.repository.LigneRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class LigneService {
+
+    private final LigneRepository ligneRepository;
+
+    @Transactional
+    public LigneDto createLigne(LigneCreateRequest request) {
+        Ligne ligne = new Ligne();
+        ligne.setDepartureCity(request.getDepartureCity());
+        ligne.setArrivalCity(request.getArrivalCity());
+        ligne.setDurationMinutes(request.getDurationMinutes());
+        ligne.setIsActive(true);
+        ligne.setCompanyId(TenantContext.getCurrentTenant());
+
+        Ligne saved = ligneRepository.save(ligne);
+        return mapToDto(saved);
+    }
+
+    public List<LigneDto> getAllLignes() {
+        Long companyId = TenantContext.getCurrentTenant();
+        return ligneRepository.findByCompanyId(companyId)
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    public LigneDto getLigneById(Long id) {
+        Ligne ligne = findLigneById(id);
+        return mapToDto(ligne);
+    }
+
+    @Transactional
+    public LigneDto updateLigne(Long id, LigneCreateRequest request) {
+        Ligne ligne = findLigneById(id);
+        ligne.setDepartureCity(request.getDepartureCity());
+        ligne.setArrivalCity(request.getArrivalCity());
+        ligne.setDurationMinutes(request.getDurationMinutes());
+
+        Ligne updated = ligneRepository.save(ligne);
+        return mapToDto(updated);
+    }
+
+    @Transactional
+    public void deleteLigne(Long id) {
+        Ligne ligne = findLigneById(id);
+        ligneRepository.delete(ligne);
+    }
+
+    private Ligne findLigneById(Long id) {
+        Long companyId = TenantContext.getCurrentTenant();
+        return ligneRepository.findByIdAndCompanyId(id, companyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ligne non trouvée avec l'id: " + id));
+    }
+
+    private LigneDto mapToDto(Ligne ligne) {
+        return LigneDto.builder()
+                .id(ligne.getId())
+                .departureCity(ligne.getDepartureCity())
+                .arrivalCity(ligne.getArrivalCity())
+                .durationMinutes(ligne.getDurationMinutes())
+                .isActive(ligne.getIsActive())
+                .companyId(ligne.getCompanyId())
+                .build();
+    }
+}
