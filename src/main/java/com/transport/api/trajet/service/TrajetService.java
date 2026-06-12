@@ -212,7 +212,7 @@ public class TrajetService {
                 .arrivalCity(ligne != null ? ligne.getArrivalCity() : null)
                 .departureTime(trajet.getDepartureTime())
                 .arrivalTime(trajet.getArrivalTime())
-                .durationMinutes(ligne != null ? ligne.getDurationMinutes() : null)
+                .durationMinutes(ligne != null ? (int)(ligne.getDurationSeconds() / 60) : null)
                 .price(trajet.getBasePrice())
                 .availableSeats(availableSeats)
                 .totalSeats(bus != null ? bus.getCapacity() : 0)

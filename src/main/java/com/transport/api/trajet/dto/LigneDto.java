@@ -9,7 +9,8 @@ public class LigneDto {
     private Long id;
     private String departureCity;
     private String arrivalCity;
-    private Integer durationMinutes;
+    private Long durationSeconds;
+    private String durationFormatted;
     private Boolean isActive;
     private Long companyId;
 }

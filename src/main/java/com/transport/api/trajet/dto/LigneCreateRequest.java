@@ -14,7 +14,15 @@ public class LigneCreateRequest {
     @NotBlank(message = "La ville d'arrivée est requise")
     private String arrivalCity;
 
-    @NotNull(message = "La durée est requise")
-    @Min(value = 1, message = "La durée doit être au moins 1 minute")
+    @NotNull(message = "Le nombre de jours est requis")
+    @Min(value = 0, message = "Le nombre de jours doit être positif")
+    private Integer durationDays;
+
+    @NotNull(message = "Le nombre d'heures est requis")
+    @Min(value = 0, message = "Le nombre d'heures doit être positif")
+    private Integer durationHours;
+
+    @NotNull(message = "Le nombre de minutes est requis")
+    @Min(value = 0, message = "Le nombre de minutes doit être positif")
     private Integer durationMinutes;
 }

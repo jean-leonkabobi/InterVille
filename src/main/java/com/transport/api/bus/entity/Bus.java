@@ -2,9 +2,11 @@ package com.transport.api.bus.entity;
 
 import com.transport.api.common.BaseEntity;
 import com.transport.api.bus.enums.StatutBus;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
 
 @Entity
 @Table(name = "bus")
@@ -18,7 +20,8 @@ public class Bus extends BaseEntity {
     @Column(name = "capacity", nullable = false)
     private Integer capacity;
 
-    @Column(name = "seat_config", columnDefinition = "JSONB")
+    @Type(JsonType.class)
+    @Column(name = "seat_config", columnDefinition = "jsonb")
     private String seatConfig; // Stocké en JSON
 
     @Enumerated(EnumType.STRING)

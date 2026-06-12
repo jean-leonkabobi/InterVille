@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,7 +25,13 @@ public class LigneService {
         Ligne ligne = new Ligne();
         ligne.setDepartureCity(request.getDepartureCity());
         ligne.setArrivalCity(request.getArrivalCity());
-        ligne.setDurationMinutes(request.getDurationMinutes());
+
+        // Calculer la durée totale en secondes (cast explicite en long pour éviter l'overflow)
+        long totalSeconds = (long) request.getDurationDays() * 24 * 3600 +
+                (long) request.getDurationHours() * 3600 +
+                (long) request.getDurationMinutes() * 60;
+
+        ligne.setDurationSeconds(totalSeconds);
         ligne.setIsActive(true);
         ligne.setCompanyId(TenantContext.getCurrentTenant());
 
@@ -50,7 +57,13 @@ public class LigneService {
         Ligne ligne = findLigneById(id);
         ligne.setDepartureCity(request.getDepartureCity());
         ligne.setArrivalCity(request.getArrivalCity());
-        ligne.setDurationMinutes(request.getDurationMinutes());
+
+        // Calculer la durée totale en secondes (cast explicite en long)
+        long totalSeconds = (long) request.getDurationDays() * 24 * 3600 +
+                (long) request.getDurationHours() * 3600 +
+                (long) request.getDurationMinutes() * 60;
+
+        ligne.setDurationSeconds(totalSeconds);
 
         Ligne updated = ligneRepository.save(ligne);
         return mapToDto(updated);
@@ -69,13 +82,48 @@ public class LigneService {
     }
 
     private LigneDto mapToDto(Ligne ligne) {
+        // Formater la durée pour l'affichage
+        String durationFormatted = formatDuration(ligne.getDurationSeconds());
+
         return LigneDto.builder()
                 .id(ligne.getId())
                 .departureCity(ligne.getDepartureCity())
                 .arrivalCity(ligne.getArrivalCity())
-                .durationMinutes(ligne.getDurationMinutes())
+                .durationSeconds(ligne.getDurationSeconds())
+                .durationFormatted(durationFormatted)
                 .isActive(ligne.getIsActive())
                 .companyId(ligne.getCompanyId())
                 .build();
+    }
+
+    private String formatDuration(Long seconds) {
+        if (seconds == null) return "0 minute";
+
+        Duration duration = Duration.ofSeconds(seconds);
+        long days = duration.toDays();
+        long hours = duration.toHoursPart();
+        long minutes = duration.toMinutesPart();
+
+        StringBuilder result = new StringBuilder();
+
+        if (days > 0) {
+            result.append(days).append(" jour").append(days > 1 ? "s" : "");
+            if (hours > 0 || minutes > 0) result.append(" ");
+        }
+
+        if (hours > 0) {
+            result.append(hours).append(" heure").append(hours > 1 ? "s" : "");
+            if (minutes > 0) result.append(" ");
+        }
+
+        if (minutes > 0) {
+            result.append(minutes).append(" minute").append(minutes > 1 ? "s" : "");
+        }
+
+        if (result.length() == 0) {
+            return "0 minute";
+        }
+
+        return result.toString();
     }
 }
