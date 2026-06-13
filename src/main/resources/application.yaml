@@ -46,6 +46,10 @@ jwt:
   expiration: 86400000
   refresh-expiration: 604800000
 
+reservation:
+  verrouillage:
+    timeout-minutes: 15
+
 logging:
   level:
     com.transport: DEBUG
