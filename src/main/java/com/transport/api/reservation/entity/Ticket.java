@@ -23,6 +23,9 @@ public class Ticket {
     @Column(name = "qr_code", nullable = false, unique = true, length = 255)
     private String qrCode;
 
+    @Column(name = "qr_code_image")
+    private String qrCodeImage;  // Base64 ou URL
+
     @Column(name = "validated_at")
     private LocalDateTime validatedAt;
 
