@@ -7,16 +7,17 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
-    @Query("SELECT COUNT(r) FROM Reservation r WHERE r.trajetId = :trajetId AND r.status = 'PAID'")
-    Long countConfirmedReservationsByTrajetId(@Param("trajetId") Long trajetId);
+    Optional<Reservation> findByReservationCode(UUID reservationCode);
 
-    @Query("SELECT rs.siegeId FROM ReservationSiege rs WHERE rs.reservationId IN (SELECT r.id FROM Reservation r WHERE r.trajetId = :trajetId AND r.status = 'PAID')")
-    List<Long> findReservedSeatIdsByTrajetId(@Param("trajetId") Long trajetId);
+    @Query("SELECT r FROM Reservation r WHERE r.userId = :userId ORDER BY r.createdAt DESC")
+    List<Reservation> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId);
 
-    @Query("SELECT CASE WHEN COUNT(rs) > 0 THEN true ELSE false END FROM ReservationSiege rs WHERE rs.reservationId IN (SELECT r.id FROM Reservation r WHERE r.trajetId = :trajetId AND r.status = 'PAID') AND rs.siegeId = :siegeId")
-    boolean isSeatReservedForTrajet(@Param("trajetId") Long trajetId, @Param("siegeId") Long siegeId);
+    @Query("SELECT r FROM Reservation r WHERE r.trajetId = :trajetId AND r.status IN ('PENDING', 'PAID')")
+    List<Reservation> findActiveReservationsByTrajetId(@Param("trajetId") Long trajetId);
 }
