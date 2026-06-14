@@ -4,6 +4,7 @@ import com.transport.api.reservation.enums.StatutReservation;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -18,7 +19,7 @@ public class ReservationResponse {
     private String arrivalCity;
     private LocalDateTime departureTime;
     private List<String> sieges;
-    private Double totalPrice;
+    private BigDecimal totalPrice;
     private StatutReservation status;
     private LocalDateTime expiresAt;
     private String passengerName;

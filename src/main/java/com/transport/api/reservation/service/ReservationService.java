@@ -96,7 +96,8 @@ public class ReservationService {
         }
 
         // 4. Calculer le prix total
-        double totalPrice = trajet.getBasePrice() * request.getNumerosSieges().size();
+        java.math.BigDecimal totalPrice = java.math.BigDecimal.valueOf(trajet.getBasePrice())
+                .multiply(java.math.BigDecimal.valueOf(request.getNumerosSieges().size()));
 
         // 5. Récupérer l'utilisateur connecté (si client)
         Long userId = null;
