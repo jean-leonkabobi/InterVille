@@ -1,7 +1,7 @@
 package com.transport.api.paiement.enums;
 
 public enum ModePaiement {
-    MOBILE_MONEY,
-    ESPECES,
-    CARTE
+    MPESA,           // M-Pesa (RDC)
+    ORANGE_MONEY,    // Orange Money (RDC)
+    CASH             // Espèces (guichet)
 }
