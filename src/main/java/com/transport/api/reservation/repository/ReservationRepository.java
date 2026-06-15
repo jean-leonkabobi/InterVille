@@ -30,4 +30,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     // 👇 AJOUTE CETTE MÉTHODE (utilisée par TrajetService)
     @Query("SELECT COUNT(r) FROM Reservation r WHERE r.trajetId = :trajetId AND r.status = 'PAID'")
     Long countConfirmedReservationsByTrajetId(@Param("trajetId") Long trajetId);
+
+    @Query("SELECT r FROM Reservation r WHERE r.userId = :userId AND r.status = :status ORDER BY r.createdAt DESC")
+    List<Reservation> findByUserIdAndStatus(@Param("userId") Long userId, @Param("status") String status);
 }
