@@ -17,91 +17,113 @@ public class ResendEmailService {
     private final WebClient.Builder webClientBuilder;
     private final ObjectMapper objectMapper;
 
-    @Value("${resend.api-key}")
+    @Value("${resend.api-key:}")
     private String apiKey;
 
-    @Value("${resend.from-email}")
+    @Value("${resend.from-email:noreply@transport-rdc.com}")
     private String fromEmail;
 
-    private static final String VERIFICATION_TEMPLATE = """
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"></head>
-        <body style="font-family: Arial, sans-serif;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #2c3e50;">Bienvenue sur Transport RDC</h2>
-                <p>Merci de vous être inscrit ! Veuillez vérifier votre adresse email en cliquant sur le lien ci-dessous :</p>
-                <a href="%s" style="display: inline-block; padding: 10px 20px; background-color: #3498db; color: white; text-decoration: none; border-radius: 5px;">Vérifier mon email</a>
-                <p style="margin-top: 20px; color: #7f8c8d; font-size: 12px;">Ce lien expire dans 24 heures.</p>
-            </div>
-        </body>
-        </html>
-    """;
+    private static final String RESEND_API_URL = "https://api.resend.com";
 
-    private static final String RESET_TEMPLATE = """
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"></head>
-        <body style="font-family: Arial, sans-serif;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #2c3e50;">Réinitialisation de votre mot de passe</h2>
-                <p>Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le lien ci-dessous :</p>
-                <a href="%s" style="display: inline-block; padding: 10px 20px; background-color: #e74c3c; color: white; text-decoration: none; border-radius: 5px;">Réinitialiser mon mot de passe</a>
-                <p style="margin-top: 20px; color: #7f8c8d; font-size: 12px;">Ce lien expire dans 1 heure.</p>
-            </div>
-        </body>
-        </html>
-    """;
+    /**
+     * Envoie un code de vérification à 6 chiffres par email
+     */
+    public void sendVerificationCode(String to, String code) {
+        String subject = "📱 Votre code de vérification - Transport RDC";
+        String htmlContent = String.format("""
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="UTF-8"></head>
+            <body style="font-family: Arial, sans-serif;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2c3e50;">Transport RDC</h2>
+                    <p>Merci de vous être inscrit ! Voici votre code de vérification :</p>
+                    <div style="font-size: 32px; font-weight: bold; text-align: center; padding: 20px; background-color: #f0f0f0; border-radius: 10px; letter-spacing: 5px;">
+                        %s
+                    </div>
+                    <p style="margin-top: 20px; color: #7f8c8d; font-size: 12px;">Ce code expire dans 15 minutes. Ne le partagez avec personne.</p>
+                    <p style="color: #7f8c8d; font-size: 12px;">Si vous n'avez pas créé de compte, ignorez cet email.</p>
+                </div>
+            </body>
+            </html>
+            """, code);
 
-    public void sendVerificationEmail(String to, String token, String baseUrl) {
-        String verificationUrl = baseUrl + "/auth/verify-email?token=" + token;
-        String htmlContent = String.format(VERIFICATION_TEMPLATE, verificationUrl);
-
-        sendEmail(to, "Vérifiez votre email - Transport RDC", htmlContent);
+        sendEmail(to, subject, htmlContent);
     }
 
-    public void sendPasswordResetEmail(String to, String token, String baseUrl) {
-        String resetUrl = baseUrl + "/auth/reset-password?token=" + token;
-        String htmlContent = String.format(RESET_TEMPLATE, resetUrl);
+    /**
+     * Envoie un code de réinitialisation de mot de passe à 6 chiffres par email
+     */
+    public void sendPasswordResetCode(String to, String code) {
+        String subject = "🔐 Réinitialisation de votre mot de passe - Transport RDC";
+        String htmlContent = String.format("""
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="UTF-8"></head>
+            <body style="font-family: Arial, sans-serif;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2c3e50;">Transport RDC</h2>
+                    <p>Vous avez demandé la réinitialisation de votre mot de passe. Voici votre code :</p>
+                    <div style="font-size: 32px; font-weight: bold; text-align: center; padding: 20px; background-color: #f0f0f0; border-radius: 10px; letter-spacing: 5px;">
+                        %s
+                    </div>
+                    <p style="margin-top: 20px; color: #7f8c8d; font-size: 12px;">Ce code expire dans 15 minutes. Ne le partagez avec personne.</p>
+                    <p style="color: #7f8c8d; font-size: 12px;">Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
+                </div>
+            </body>
+            </html>
+            """, code);
 
-        sendEmail(to, "Réinitialisation de votre mot de passe - Transport RDC", htmlContent);
+        sendEmail(to, subject, htmlContent);
     }
 
+    /**
+     * Envoi d'email via l'API Resend
+     */
     private void sendEmail(String to, String subject, String htmlContent) {
         try {
-            WebClient webClient = webClientBuilder.baseUrl("https://api.resend.com").build();
+            WebClient webClient = webClientBuilder.baseUrl(RESEND_API_URL).build();
 
-            // Créer le payload JSON
-            var payload = String.format("""
+            // Nettoyer le HTML pour JSON (échapper les guillemets et retours à la ligne)
+            String cleanedHtml = htmlContent
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\n")
+                    .replace("\r", "\\r");
+
+            // Construire le payload JSON
+            String payload = String.format("""
                 {
                     "from": "%s",
                     "to": ["%s"],
                     "subject": "%s",
                     "html": "%s"
                 }
-            """, fromEmail, to, subject, escapeJson(htmlContent));
+                """, fromEmail, to, subject, cleanedHtml);
 
-            webClient.post()
+            // Appel API Resend
+            String response = webClient.post()
                     .uri("/emails")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .bodyValue(payload)
                     .retrieve()
                     .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
-                            response -> response.bodyToMono(String.class)
-                                    .flatMap(error -> Mono.error(new RuntimeException("Erreur Resend: " + error))))
+                            error -> error.bodyToMono(String.class)
+                                    .flatMap(errorBody -> {
+                                        System.err.println("Erreur Resend: " + errorBody);
+                                        return Mono.error(new RuntimeException("Erreur lors de l'envoi de l'email: " + errorBody));
+                                    }))
                     .bodyToMono(String.class)
                     .block();
 
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de l'envoi de l'email: " + e.getMessage(), e);
-        }
-    }
+            System.out.println("✅ Email envoyé avec succès à " + to);
+            System.out.println("Réponse Resend: " + response);
 
-    private String escapeJson(String json) {
-        return json.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r");
+        } catch (Exception e) {
+            System.err.println("❌ Erreur lors de l'envoi de l'email: " + e.getMessage());
+            // On ne lance pas d'exception pour ne pas bloquer l'inscription
+            // Mais on log l'erreur
+        }
     }
 }

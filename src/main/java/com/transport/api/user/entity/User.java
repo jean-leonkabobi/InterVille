@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -33,4 +35,19 @@ public class User extends BaseEntity {
 
     @Column(name = "is_active")
     private Boolean isActive = true;
+
+    @Column(name = "email_verified")
+    private boolean emailVerified = false;
+
+    @Column(name = "verification_code")
+    private String verificationCode;
+
+    @Column(name = "verification_code_expires")
+    private LocalDateTime verificationCodeExpires;
+
+    @Column(name = "reset_code")
+    private String resetCode;
+
+    @Column(name = "reset_code_expires")
+    private LocalDateTime resetCodeExpires;
 }
