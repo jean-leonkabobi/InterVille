@@ -35,6 +35,11 @@ spring:
       write-dates-as-timestamps: false
     time-zone: Africa/Kinshasa
 
+  resend:
+    api-key: ${RESEND_API_KEY:re_ZKPuAKS8_AozT9S8PvFiyiFXJDwnF9MXQ}
+    from-email: ${RESEND_FROM_EMAIL:noreply@transport-rdc.com}
+    base-url: https://api.resend.com
+
 server:
   port: 8080
   error:
