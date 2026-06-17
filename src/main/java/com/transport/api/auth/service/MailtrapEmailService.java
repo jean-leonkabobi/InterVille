@@ -1,32 +1,26 @@
 package com.transport.api.auth.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-public class ResendEmailService {
+public class MailtrapEmailService {
 
-    private final WebClient.Builder webClientBuilder;
-    private final ObjectMapper objectMapper;
+    private final JavaMailSender mailSender;
 
-    @Value("${resend.api-key:}")
-    private String apiKey;
-
-    @Value("${resend.from-email:noreply@transport-rdc.com}")
+    @Value("${spring.mail.username}")
     private String fromEmail;
 
-    private static final String RESEND_API_URL = "https://api.resend.com";
-
     /**
-     * Envoie un code de vérification à 6 chiffres par email
+     * Envoie un code de vérification à 6 chiffres par email via Mailtrap
      */
     public void sendVerificationCode(String to, String code) {
         String subject = "📱 Votre code de vérification - Transport RDC";
@@ -52,7 +46,7 @@ public class ResendEmailService {
     }
 
     /**
-     * Envoie un code de réinitialisation de mot de passe à 6 chiffres par email
+     * Envoie un code de réinitialisation de mot de passe à 6 chiffres par email via Mailtrap
      */
     public void sendPasswordResetCode(String to, String code) {
         String subject = "🔐 Réinitialisation de votre mot de passe - Transport RDC";
@@ -78,52 +72,26 @@ public class ResendEmailService {
     }
 
     /**
-     * Envoi d'email via l'API Resend
+     * Envoi d'email via SMTP (Mailtrap)
      */
     private void sendEmail(String to, String subject, String htmlContent) {
         try {
-            WebClient webClient = webClientBuilder.baseUrl(RESEND_API_URL).build();
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            // Nettoyer le HTML pour JSON (échapper les guillemets et retours à la ligne)
-            String cleanedHtml = htmlContent
-                    .replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    .replace("\n", "\\n")
-                    .replace("\r", "\\r");
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
 
-            // Construire le payload JSON
-            String payload = String.format("""
-                {
-                    "from": "%s",
-                    "to": ["%s"],
-                    "subject": "%s",
-                    "html": "%s"
-                }
-                """, fromEmail, to, subject, cleanedHtml);
+            mailSender.send(message);
 
-            // Appel API Resend
-            String response = webClient.post()
-                    .uri("/emails")
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .bodyValue(payload)
-                    .retrieve()
-                    .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
-                            error -> error.bodyToMono(String.class)
-                                    .flatMap(errorBody -> {
-                                        System.err.println("Erreur Resend: " + errorBody);
-                                        return Mono.error(new RuntimeException("Erreur lors de l'envoi de l'email: " + errorBody));
-                                    }))
-                    .bodyToMono(String.class)
-                    .block();
+            log.info("✅ Email envoyé avec succès à {}", to);
+            log.info("   📬 Consultez votre boîte Mailtrap pour voir le message");
 
-            System.out.println("✅ Email envoyé avec succès à " + to);
-            System.out.println("Réponse Resend: " + response);
-
-        } catch (Exception e) {
-            System.err.println("❌ Erreur lors de l'envoi de l'email: " + e.getMessage());
-            // On ne lance pas d'exception pour ne pas bloquer l'inscription
-            // Mais on log l'erreur
+        } catch (MessagingException e) {
+            log.error("❌ Erreur lors de l'envoi de l'email: {}", e.getMessage());
+            throw new RuntimeException("Erreur lors de l'envoi de l'email", e);
         }
     }
 }

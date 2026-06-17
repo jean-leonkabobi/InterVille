@@ -35,10 +35,18 @@ spring:
       write-dates-as-timestamps: false
     time-zone: Africa/Kinshasa
 
-  resend:
-    api-key: ${RESEND_API_KEY:re_ZKPuAKS8_AozT9S8PvFiyiFXJDwnF9MXQ}
-    from-email: ${RESEND_FROM_EMAIL:noreply@transport-rdc.com}
-    base-url: https://api.resend.com
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: ca27fe61b57757
+    password: 2806a8d11c9554
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
 
 server:
   port: 8080

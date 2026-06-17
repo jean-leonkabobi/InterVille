@@ -33,7 +33,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
-    private final ResendEmailService resendEmailService;
+    private final MailtrapEmailService mailtrapEmailService;
 
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
@@ -82,7 +82,7 @@ public class AuthService {
         userRepository.save(user);
 
         // Envoyer code par email
-        resendEmailService.sendVerificationCode(user.getEmail(), verificationCode);
+        mailtrapEmailService.sendVerificationCode(user.getEmail(), verificationCode);
 
         return "Inscription réussie. Un code de vérification à 6 chiffres vous a été envoyé par email.";
     }
@@ -132,7 +132,7 @@ public class AuthService {
         user.setVerificationCodeExpires(LocalDateTime.now().plusMinutes(CODE_EXPIRATION_MINUTES));
         userRepository.save(user);
 
-        resendEmailService.sendVerificationCode(user.getEmail(), newCode);
+        mailtrapEmailService.sendVerificationCode(user.getEmail(), newCode);
 
         return "Nouveau code de vérification envoyé par email.";
     }
@@ -249,7 +249,7 @@ public class AuthService {
         user.setResetCodeExpires(LocalDateTime.now().plusMinutes(CODE_EXPIRATION_MINUTES));
         userRepository.save(user);
 
-        resendEmailService.sendPasswordResetCode(user.getEmail(), resetCode);
+        mailtrapEmailService.sendPasswordResetCode(user.getEmail(), resetCode);
 
         return "Un code de réinitialisation à 6 chiffres vous a été envoyé par email.";
     }
