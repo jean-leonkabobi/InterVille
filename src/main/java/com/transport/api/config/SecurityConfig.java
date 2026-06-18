@@ -35,12 +35,18 @@ public class SecurityConfig {
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         // Endpoints publics
-                        .requestMatchers("/auth/**",
-                                         "/swagger-ui/**",
-                                         "/v3/api-docs/**",
-                                         "/actuator/**",
-                                         "/api/trajets/recherche/public"
+                        .requestMatchers(
+                                "/auth/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/actuator/**",
+                                "/api/trajets/recherche/public",
+                                "/api/trajets/*/sieges/disponibles/public"  // ← CORRIGÉ
                         ).permitAll()
+                        // Endpoints AGENT
+                        .requestMatchers("/api/agence/**").hasRole("AGENT")
+                        .requestMatchers("/api/reservations/agent/**").hasRole("AGENT")
+                        .requestMatchers("/api/tickets/print/**").hasAnyRole("AGENT", "ADMIN")
                         // Le reste nécessite authentification
                         .anyRequest().authenticated()
                 )

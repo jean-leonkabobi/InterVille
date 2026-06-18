@@ -38,6 +38,10 @@ public class JwtService {
         return extractClaim(token, claims -> claims.get("companyId", Long.class));
     }
 
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
+    }
+
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
@@ -47,6 +51,14 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("companyId", companyId);
+
+        // 🔥 AJOUTER LE RÔLE DANS LE TOKEN
+        String role = userDetails.getAuthorities().stream()
+                .findFirst()
+                .map(auth -> auth.getAuthority().replace("ROLE_", ""))
+                .orElse("CLIENT");
+        claims.put("role", role);
+
         return buildToken(claims, userDetails, jwtExpiration);
     }
 
@@ -54,6 +66,14 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("companyId", companyId);
+
+        // 🔥 AJOUTER LE RÔLE DANS LE REFRESH TOKEN
+        String role = userDetails.getAuthorities().stream()
+                .findFirst()
+                .map(auth -> auth.getAuthority().replace("ROLE_", ""))
+                .orElse("CLIENT");
+        claims.put("role", role);
+
         return buildToken(claims, userDetails, refreshExpiration);
     }
 

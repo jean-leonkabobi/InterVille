@@ -284,7 +284,7 @@ public class ReservationService {
         reservation.setReservationCode(UUID.randomUUID());
         reservation.setPassengerName(request.getPassengerName());
         reservation.setPassengerPhone(request.getPassengerPhone());
-        reservation.setStatus(StatutReservation.PENDING);
+        reservation.setStatus(StatutReservation.PAID);
         reservation.setTotalPrice(java.math.BigDecimal.valueOf(totalPrice));
         reservation.setExpiresAt(LocalDateTime.now().plusMinutes(timeoutMinutes));
         reservation.setNumberOfPassengers(1);

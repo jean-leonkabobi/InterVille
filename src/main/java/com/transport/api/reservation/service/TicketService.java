@@ -51,8 +51,8 @@ public class TicketService {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Réservation non trouvée"));
 
-        if (reservation.getStatus() != StatutReservation.PAID) {
-            throw new RuntimeException("Seules les réservations payées peuvent générer un ticket");
+        if (reservation.getStatus() != StatutReservation.PAID && reservation.getStatus() != StatutReservation.PENDING) {
+            throw new RuntimeException("Seules les réservations payées ou en attente peuvent générer un ticket");
         }
 
         // 2. Vérifier si un ticket existe déjà
