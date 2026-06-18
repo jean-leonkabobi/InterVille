@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,4 +34,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     @Query("SELECT r FROM Reservation r WHERE r.userId = :userId AND r.status = :status ORDER BY r.createdAt DESC")
     List<Reservation> findByUserIdAndStatus(@Param("userId") Long userId, @Param("status") String status);
+
+    List<Reservation> findByAgenceIdAndCreatedAtBetween(Long agenceId, LocalDateTime start, LocalDateTime end);
 }

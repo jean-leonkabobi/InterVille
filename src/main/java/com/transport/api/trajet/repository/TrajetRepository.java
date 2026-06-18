@@ -28,6 +28,8 @@ public interface TrajetRepository extends JpaRepository<Trajet, Long> {
 
     boolean existsByChauffeurIdAndDepartureTimeBetween(Long chauffeurId, LocalDateTime start, LocalDateTime end);
 
+    List<Trajet> findByCompanyIdAndDepartureTimeBetween(Long companyId, LocalDateTime start, LocalDateTime end);
+
     @Query("SELECT t FROM Trajet t WHERE t.companyId = :companyId " +
             "AND t.departureTime BETWEEN :start AND :end " +
             "AND t.status != 'CANCELLED' " +

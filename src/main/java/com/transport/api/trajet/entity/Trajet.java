@@ -35,4 +35,8 @@ public class Trajet extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
     private StatutTrajet status = StatutTrajet.SCHEDULED;
+
+    @ManyToOne
+    @JoinColumn(name = "ligne_id", insertable = false, updatable = false)
+    private Ligne ligne;
 }

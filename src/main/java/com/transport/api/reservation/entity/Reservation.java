@@ -41,6 +41,9 @@ public class Reservation extends BaseEntity {
     @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
 
+    @Column(name = "number_of_passengers")
+    private Integer numberOfPassengers = 1;
+
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 }
