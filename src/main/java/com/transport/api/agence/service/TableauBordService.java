@@ -35,7 +35,7 @@ public class TableauBordService {
         LocalDateTime todayEnd = LocalDate.now().atTime(LocalTime.MAX);
 
         // Ventes du jour
-        List<Transaction> transactionsDuJour = transactionRepository.findByAgenceIdAndDateBetween(agenceId, todayStart, todayEnd);
+        List<Transaction> transactionsDuJour = transactionRepository.findByAgenceIdAndCreatedAtBetween(agenceId, todayStart, todayEnd);
         Integer ventesDuJour = transactionsDuJour.size();
         Double montantTotalDuJour = transactionsDuJour.stream()
                 .mapToDouble(t -> t.getAmount().doubleValue())
@@ -78,7 +78,7 @@ public class TableauBordService {
 
         // Statistiques mensuelles
         LocalDateTime monthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
-        List<Transaction> transactionsMois = transactionRepository.findByAgenceIdAndDateBetween(agenceId, monthStart, todayEnd);
+        List<Transaction> transactionsMois = transactionRepository.findByAgenceIdAndCreatedAtBetween(agenceId, monthStart, todayEnd);
         Integer totalVentesMois = transactionsMois.size();
         Double montantTotalMois = transactionsMois.stream()
                 .mapToDouble(t -> t.getAmount().doubleValue())
@@ -86,7 +86,7 @@ public class TableauBordService {
 
         // Statistiques hebdomadaires
         LocalDateTime weekStart = LocalDate.now().minusDays(7).atStartOfDay();
-        List<Transaction> transactionsSemaine = transactionRepository.findByAgenceIdAndDateBetween(agenceId, weekStart, todayEnd);
+        List<Transaction> transactionsSemaine = transactionRepository.findByAgenceIdAndCreatedAtBetween(agenceId, weekStart, todayEnd);
         Integer totalVentesSemaine = transactionsSemaine.size();
         Double montantTotalSemaine = transactionsSemaine.stream()
                 .mapToDouble(t -> t.getAmount().doubleValue())

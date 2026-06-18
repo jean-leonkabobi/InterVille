@@ -14,5 +14,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByStatus(String status);
 
-    List<Transaction> findByAgenceIdAndDateBetween(Long agenceId, LocalDateTime start, LocalDateTime end);
+    List<Transaction> findByAgenceIdAndCreatedAtBetween(Long agenceId, LocalDateTime start, LocalDateTime end);
 }
