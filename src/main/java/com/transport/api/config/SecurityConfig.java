@@ -41,7 +41,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/actuator/**",
                                 "/api/trajets/recherche/public",
-                                "/api/trajets/*/sieges/disponibles/public"  // ← CORRIGÉ
+                                "/api/trajets/*/sieges/disponibles/public"  
                         ).permitAll()
                         // Endpoints AGENT
                         .requestMatchers("/api/agence/**").hasRole("AGENT")
