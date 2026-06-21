@@ -57,4 +57,13 @@ public class ChauffeurController {
             @Valid @RequestBody StatutTrajetRequest request) {
         return ResponseEntity.ok(chauffeurService.updateStatutTrajet(trajetId, request.getStatut()));
     }
+
+    /**
+     * FD7 - Historique des missions (30 jours)
+     */
+    @GetMapping("/missions/historique")
+    @PreAuthorize("hasRole('CHAUFFEUR')")
+    public ResponseEntity<List<MissionDto>> getHistoriqueMissions() {
+        return ResponseEntity.ok(chauffeurService.getHistoriqueMissions());
+    }
 }

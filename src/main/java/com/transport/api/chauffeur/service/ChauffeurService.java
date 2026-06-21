@@ -230,4 +230,22 @@ public class ChauffeurService {
 
         return "Statut du trajet mis à jour avec succès: " + nouveauStatut.name();
     }
+
+    /**
+     * FD7 - Historique des missions (30 jours)
+     */
+    public List<MissionDto> getHistoriqueMissions() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User chauffeur = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Chauffeur non trouvé"));
+
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+
+        List<Trajet> trajets = trajetRepository.findByChauffeurIdAndDepartureTimeBetween(
+                chauffeur.getId(), thirtyDaysAgo, LocalDateTime.now());
+
+        return trajets.stream()
+                .map(this::mapToMissionDto)
+                .collect(Collectors.toList());
+    }
 }
