@@ -28,7 +28,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query("SELECT CASE WHEN COUNT(rs) > 0 THEN true ELSE false END FROM ReservationSiege rs WHERE rs.reservationId IN (SELECT r.id FROM Reservation r WHERE r.trajetId = :trajetId AND r.status = 'PAID') AND rs.siegeId = :siegeId")
     boolean isSeatReservedForTrajet(@Param("trajetId") Long trajetId, @Param("siegeId") Long siegeId);
 
-    // 👇 AJOUTE CETTE MÉTHODE (utilisée par TrajetService)
     @Query("SELECT COUNT(r) FROM Reservation r WHERE r.trajetId = :trajetId AND r.status = 'PAID'")
     Long countConfirmedReservationsByTrajetId(@Param("trajetId") Long trajetId);
 
@@ -39,6 +38,11 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     @Query("SELECT r FROM Reservation r WHERE r.trajetId = :trajetId AND r.status = 'PAID'")
     List<Reservation> findPaidReservationsByTrajetId(@Param("trajetId") Long trajetId);
+
+    Long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    @Query("SELECT COALESCE(AVG(r.totalPrice), 0) FROM Reservation r WHERE r.status = 'PAID'")
+    Double averageTauxRemplissage();
 
     Optional<Reservation> findByTrajetIdAndPassengerName(Long trajetId, String passengerName);
 }
