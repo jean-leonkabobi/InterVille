@@ -1,5 +1,6 @@
 package com.transport.api.reservation.controller;
 
+import com.transport.api.reservation.dto.AnnulationClientRequest;
 import com.transport.api.reservation.dto.ReservationRequest;
 import com.transport.api.reservation.dto.ReservationResponse;
 import com.transport.api.reservation.service.ReservationService;
@@ -36,5 +37,16 @@ public class ReservationController {
     public ResponseEntity<Void> cancelReservation(@PathVariable Long id) {
         reservationService.cancelReservation(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * FC11 - Annulation d'une réservation par le client
+     */
+    @DeleteMapping("/client/{id}")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<String> annulerReservationClient(
+            @PathVariable Long id,
+            @Valid @RequestBody AnnulationClientRequest request) {
+        return ResponseEntity.ok(reservationService.annulerReservationClient(id, request));
     }
 }

@@ -30,4 +30,8 @@ public interface VerrouSiegeRepository extends JpaRepository<VerrouSiege, Long> 
     void deleteByTrajetIdAndSessionId(@Param("trajetId") Long trajetId, @Param("sessionId") UUID sessionId);
 
     boolean existsByTrajetIdAndSiegeIdAndExpiresAtAfter(Long trajetId, Long siegeId, LocalDateTime now);
+
+    @Modifying
+    @Query("DELETE FROM VerrouSiege v WHERE v.trajetId = :trajetId AND v.siegeId = :siegeId")
+    void deleteByTrajetIdAndSiegeId(@Param("trajetId") Long trajetId, @Param("siegeId") Long siegeId);
 }

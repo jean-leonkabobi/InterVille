@@ -8,10 +8,7 @@ import com.transport.api.bus.repository.BusRepository;
 import com.transport.api.bus.repository.SiegeRepository;
 import com.transport.api.common.exception.ResourceNotFoundException;
 import com.transport.api.context.TenantContext;
-import com.transport.api.reservation.dto.ModificationReservationRequest;
-import com.transport.api.reservation.dto.ReservationAgentRequest;
-import com.transport.api.reservation.dto.ReservationRequest;
-import com.transport.api.reservation.dto.ReservationResponse;
+import com.transport.api.reservation.dto.*;
 import com.transport.api.reservation.entity.Reservation;
 import com.transport.api.reservation.entity.ReservationSiege;
 import com.transport.api.reservation.entity.VerrouSiege;
@@ -471,5 +468,45 @@ public class ReservationService {
                 .passengerName(reservation.getPassengerName())
                 .passengerPhone(reservation.getPassengerPhone())
                 .build();
+    }
+
+    /**
+     * FC11 - Annulation d'une réservation par le client
+     */
+    @Transactional
+    public String annulerReservationClient(Long reservationId, AnnulationClientRequest request) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User client = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Client non trouvé"));
+
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Réservation non trouvée"));
+
+        // Vérifier que la réservation appartient bien au client
+        if (!reservation.getUserId().equals(client.getId())) {
+            throw new RuntimeException("Vous n'êtes pas autorisé à annuler cette réservation");
+        }
+
+        // Vérifier que la réservation est annulable
+        if (reservation.getStatus() == StatutReservation.CANCELLED) {
+            throw new RuntimeException("Cette réservation est déjà annulée");
+        }
+
+        if (reservation.getStatus() == StatutReservation.PAID) {
+            throw new RuntimeException("Cette réservation est payée. Contactez l'agence pour un remboursement.");
+        }
+
+        // Annuler la réservation
+        reservation.setStatus(StatutReservation.CANCELLED);
+        reservation.setUpdatedAt(LocalDateTime.now());
+        reservationRepository.save(reservation);
+
+        // Libérer les sièges et supprimer les verrous associés
+        List<ReservationSiege> reservationSieges = reservationSiegeRepository.findByReservationId(reservationId);
+        for (ReservationSiege rs : reservationSieges) {
+            verrouSiegeRepository.deleteByTrajetIdAndSiegeId(reservation.getTrajetId(), rs.getSiegeId());
+        }
+
+        return "Réservation annulée avec succès. Motif: " + request.getMotif();
     }
 }
