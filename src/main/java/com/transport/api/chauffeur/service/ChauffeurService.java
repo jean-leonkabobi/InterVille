@@ -15,6 +15,7 @@ import com.transport.api.reservation.repository.ReservationRepository;
 import com.transport.api.reservation.repository.ReservationSiegeRepository;
 import com.transport.api.reservation.repository.TicketRepository;
 import com.transport.api.trajet.entity.Trajet;
+import com.transport.api.trajet.enums.StatutTrajet;
 import com.transport.api.trajet.repository.TrajetRepository;
 import com.transport.api.user.entity.User;
 import com.transport.api.user.repository.UserRepository;
@@ -205,5 +206,28 @@ public class ChauffeurService {
         ticketRepository.save(ticket);
 
         return "Passager " + request.getPassengerName() + " validé avec succès";
+    }
+
+    /**
+     * FD6 - Mise à jour du statut du trajet
+     */
+    @Transactional
+    public String updateStatutTrajet(Long trajetId, StatutTrajet nouveauStatut) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User chauffeur = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Chauffeur non trouvé"));
+
+        Trajet trajet = trajetRepository.findById(trajetId)
+                .orElseThrow(() -> new RuntimeException("Trajet non trouvé"));
+
+        if (!trajet.getChauffeurId().equals(chauffeur.getId())) {
+            throw new RuntimeException("Ce trajet ne vous est pas assigné");
+        }
+
+        trajet.setStatus(nouveauStatut);
+        trajet.setUpdatedAt(LocalDateTime.now());
+        trajetRepository.save(trajet);
+
+        return "Statut du trajet mis à jour avec succès: " + nouveauStatut.name();
     }
 }

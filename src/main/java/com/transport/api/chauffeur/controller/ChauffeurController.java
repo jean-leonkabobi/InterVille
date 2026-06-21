@@ -2,6 +2,7 @@ package com.transport.api.chauffeur.controller;
 
 import com.transport.api.chauffeur.dto.ManifesteDto;
 import com.transport.api.chauffeur.dto.MissionDto;
+import com.transport.api.chauffeur.dto.StatutTrajetRequest;
 import com.transport.api.chauffeur.dto.ValidationManuelleRequest;
 import com.transport.api.chauffeur.service.ChauffeurService;
 import jakarta.validation.Valid;
@@ -44,5 +45,16 @@ public class ChauffeurController {
     @PreAuthorize("hasRole('CHAUFFEUR')")
     public ResponseEntity<String> validationManuelle(@Valid @RequestBody ValidationManuelleRequest request) {
         return ResponseEntity.ok(chauffeurService.validationManuelle(request));
+    }
+
+    /**
+     * FD6 - Mise à jour du statut du trajet
+     */
+    @PutMapping("/missions/{trajetId}/statut")
+    @PreAuthorize("hasRole('CHAUFFEUR')")
+    public ResponseEntity<String> updateStatutTrajet(
+            @PathVariable Long trajetId,
+            @Valid @RequestBody StatutTrajetRequest request) {
+        return ResponseEntity.ok(chauffeurService.updateStatutTrajet(trajetId, request.getStatut()));
     }
 }
