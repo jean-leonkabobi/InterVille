@@ -4,6 +4,7 @@ import com.transport.api.admin.dto.TableauBordGlobalDto;
 import com.transport.api.agence.repository.AgenceRepository;
 import com.transport.api.bus.entity.Bus;
 import com.transport.api.bus.repository.BusRepository;
+import com.transport.api.incident.enums.StatutIncident;
 import com.transport.api.incident.repository.IncidentRepository;
 import com.transport.api.paiement.repository.TransactionRepository;
 import com.transport.api.reservation.repository.ReservationRepository;
@@ -60,9 +61,9 @@ public class TableauBordGlobalService {
         Double tauxRemplissageMoyen = calculerTauxRemplissageMoyen();
 
         // 5. Incidents
-        Long incidentsOpen = incidentRepository.countByStatus("OPEN");
-        Long incidentsInProgress = incidentRepository.countByStatus("IN_PROGRESS");
-        Long incidentsResolved = incidentRepository.countByStatus("RESOLVED");
+        Long incidentsOpen = incidentRepository.countByStatus(StatutIncident.OPEN);
+        Long incidentsInProgress = incidentRepository.countByStatus(StatutIncident.IN_PROGRESS);
+        Long incidentsResolved = incidentRepository.countByStatus(StatutIncident.RESOLVED);
         Long incidentsTotal = incidentRepository.count();
 
         // 6. Top agences

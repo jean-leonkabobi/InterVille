@@ -11,5 +11,5 @@ import java.util.List;
 public interface IncidentRepository extends JpaRepository<Incident, Long> {
     List<Incident> findByStatus(StatutIncident status);
     List<Incident> findByTrajetId(Long trajetId);
-    Long countByStatus(String status);
+    Long countByStatus(StatutIncident status);
 }
