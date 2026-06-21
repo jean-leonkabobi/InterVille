@@ -1,13 +1,14 @@
 package com.transport.api.chauffeur.controller;
 
+import com.transport.api.chauffeur.dto.ManifesteDto;
 import com.transport.api.chauffeur.dto.MissionDto;
+import com.transport.api.chauffeur.dto.ValidationManuelleRequest;
 import com.transport.api.chauffeur.service.ChauffeurService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,5 +26,23 @@ public class ChauffeurController {
     @PreAuthorize("hasRole('CHAUFFEUR')")
     public ResponseEntity<List<MissionDto>> getMissionsDuJour() {
         return ResponseEntity.ok(chauffeurService.getMissionsDuJour());
+    }
+
+    /**
+     * FD3 - Manifeste des passagers
+     */
+    @GetMapping("/missions/{trajetId}/manifeste")
+    @PreAuthorize("hasRole('CHAUFFEUR')")
+    public ResponseEntity<ManifesteDto> getManifeste(@PathVariable Long trajetId) {
+        return ResponseEntity.ok(chauffeurService.getManifeste(trajetId));
+    }
+
+    /**
+     * FD5 - Validation manuelle d'un passager
+     */
+    @PostMapping("/validation-manuelle")
+    @PreAuthorize("hasRole('CHAUFFEUR')")
+    public ResponseEntity<String> validationManuelle(@Valid @RequestBody ValidationManuelleRequest request) {
+        return ResponseEntity.ok(chauffeurService.validationManuelle(request));
     }
 }

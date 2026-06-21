@@ -36,4 +36,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     List<Reservation> findByUserIdAndStatus(@Param("userId") Long userId, @Param("status") String status);
 
     List<Reservation> findByAgenceIdAndCreatedAtBetween(Long agenceId, LocalDateTime start, LocalDateTime end);
+
+    @Query("SELECT r FROM Reservation r WHERE r.trajetId = :trajetId AND r.status = 'PAID'")
+    List<Reservation> findPaidReservationsByTrajetId(@Param("trajetId") Long trajetId);
+
+    Optional<Reservation> findByTrajetIdAndPassengerName(Long trajetId, String passengerName);
 }
