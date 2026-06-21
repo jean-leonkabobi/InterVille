@@ -1,9 +1,6 @@
 package com.transport.api.chauffeur.controller;
 
-import com.transport.api.chauffeur.dto.ManifesteDto;
-import com.transport.api.chauffeur.dto.MissionDto;
-import com.transport.api.chauffeur.dto.StatutTrajetRequest;
-import com.transport.api.chauffeur.dto.ValidationManuelleRequest;
+import com.transport.api.chauffeur.dto.*;
 import com.transport.api.chauffeur.service.ChauffeurService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -65,5 +62,14 @@ public class ChauffeurController {
     @PreAuthorize("hasRole('CHAUFFEUR')")
     public ResponseEntity<List<MissionDto>> getHistoriqueMissions() {
         return ResponseEntity.ok(chauffeurService.getHistoriqueMissions());
+    }
+
+    /**
+     * FD8 - Signalement d'incident
+     */
+    @PostMapping("/incidents")
+    @PreAuthorize("hasRole('CHAUFFEUR')")
+    public ResponseEntity<String> signalerIncident(@Valid @RequestBody IncidentRequest request) {
+        return ResponseEntity.ok(chauffeurService.signalerIncident(request));
     }
 }

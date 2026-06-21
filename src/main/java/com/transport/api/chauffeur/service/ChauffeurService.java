@@ -4,9 +4,13 @@ import com.transport.api.bus.entity.Bus;
 import com.transport.api.bus.entity.Siege;
 import com.transport.api.bus.repository.BusRepository;
 import com.transport.api.bus.repository.SiegeRepository;
+import com.transport.api.chauffeur.dto.IncidentRequest;
 import com.transport.api.chauffeur.dto.ManifesteDto;
 import com.transport.api.chauffeur.dto.MissionDto;
 import com.transport.api.chauffeur.dto.ValidationManuelleRequest;
+import com.transport.api.incident.entity.Incident;
+import com.transport.api.incident.enums.StatutIncident;
+import com.transport.api.incident.repository.IncidentRepository;
 import com.transport.api.reservation.entity.Reservation;
 import com.transport.api.reservation.entity.ReservationSiege;
 import com.transport.api.reservation.entity.Ticket;
@@ -41,6 +45,7 @@ public class ChauffeurService {
     private final SiegeRepository siegeRepository;
     private final ReservationSiegeRepository reservationSiegeRepository;
     private final TicketRepository ticketRepository;
+    private final IncidentRepository incidentRepository;
 
     /**
      * FD2 - Missions du jour pour le chauffeur connecté
@@ -247,5 +252,37 @@ public class ChauffeurService {
         return trajets.stream()
                 .map(this::mapToMissionDto)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * FD8 - Signalement d'incident
+     */
+    @Transactional
+    public String signalerIncident(IncidentRequest request) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User chauffeur = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Chauffeur non trouvé"));
+
+        Trajet trajet = trajetRepository.findById(request.getTrajetId())
+                .orElseThrow(() -> new RuntimeException("Trajet non trouvé"));
+
+        if (!trajet.getChauffeurId().equals(chauffeur.getId())) {
+            throw new RuntimeException("Ce trajet ne vous est pas assigné");
+        }
+
+        Incident incident = new Incident();
+        incident.setTrajetId(request.getTrajetId());
+        incident.setReportedBy(chauffeur.getId());
+        incident.setType(request.getType());
+        incident.setDescription(request.getDescription());
+        incident.setStatus(StatutIncident.OPEN);
+        incident.setCompanyId(1L);
+        incident.setCreatedAt(LocalDateTime.now());
+
+        incidentRepository.save(incident);
+
+        // TODO: Notifier l'admin et l'agent (Sprint 4 ou plus tard)
+
+        return "Incident signalé avec succès";
     }
 }
