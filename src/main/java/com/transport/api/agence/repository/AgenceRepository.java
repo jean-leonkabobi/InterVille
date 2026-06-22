@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface AgenceRepository extends JpaRepository<Agence, Long> {
     List<Agence> findByCompanyId(Long companyId);
     Optional<Agence> findByIdAndCompanyId(Long id, Long companyId);
+    boolean existsByName(String name);
 }
