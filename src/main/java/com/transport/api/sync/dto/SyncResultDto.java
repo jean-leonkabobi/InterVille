@@ -3,12 +3,12 @@ package com.transport.api.sync.dto;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.List;
-
 @Data
 @Builder
-public class SyncResponse {
+public class SyncResultDto {
+    private String operationId;
     private Boolean success;
     private String message;
-    private List<SyncResultDto> results;
+    private Boolean conflict;
+    private String conflictResolution;
 }

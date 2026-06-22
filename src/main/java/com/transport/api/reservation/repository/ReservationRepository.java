@@ -2,6 +2,7 @@ package com.transport.api.reservation.repository;
 
 import com.transport.api.paiement.entity.Transaction;
 import com.transport.api.reservation.entity.Reservation;
+import com.transport.api.reservation.entity.ReservationSiege;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -51,4 +52,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     @Query("SELECT COUNT(r) FROM Reservation r WHERE r.id IN :transactionIds")
     Long countPassagersByTransactions(@Param("transactionIds") List<Transaction> transactions);
+
+    List<ReservationSiege> findByTrajetIdAndSiegeId(Long trajetId, Long siegeId);
 }

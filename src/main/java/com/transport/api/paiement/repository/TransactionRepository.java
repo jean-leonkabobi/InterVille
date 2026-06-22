@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
@@ -26,4 +27,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Double sumSuccessAmountsByDate(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     List<Transaction> findByPaymentDateBetweenAndStatus(LocalDateTime start, LocalDateTime end, StatutTransaction status);
+
+    Optional<Transaction> findFirstByReservationIdOrderByCreatedAtDesc(Long reservationId);
 }

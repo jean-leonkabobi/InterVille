@@ -7,8 +7,9 @@ import java.util.List;
 
 @Data
 @Builder
-public class SyncResponse {
+public class ConflitResolutionResponse {
     private Boolean success;
     private String message;
-    private List<SyncResultDto> results;
+    private List<ConflitDto> conflitsResolus;
+    private List<ConflitDto> conflitsPerdants;
 }

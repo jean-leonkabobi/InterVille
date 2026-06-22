@@ -8,13 +8,19 @@ import com.transport.api.bus.repository.BusRepository;
 import com.transport.api.bus.repository.SiegeRepository;
 import com.transport.api.common.exception.ResourceNotFoundException;
 import com.transport.api.context.TenantContext;
+import com.transport.api.paiement.entity.Transaction;
+import com.transport.api.paiement.enums.ModePaiement;
+import com.transport.api.paiement.enums.StatutTransaction;
+import com.transport.api.paiement.repository.TransactionRepository;
 import com.transport.api.reservation.dto.*;
 import com.transport.api.reservation.entity.Reservation;
 import com.transport.api.reservation.entity.ReservationSiege;
 import com.transport.api.reservation.entity.VerrouSiege;
 import com.transport.api.reservation.enums.StatutReservation;
+import com.transport.api.reservation.enums.StatutTicket;
 import com.transport.api.reservation.repository.ReservationRepository;
 import com.transport.api.reservation.repository.ReservationSiegeRepository;
+import com.transport.api.reservation.repository.TicketRepository;
 import com.transport.api.reservation.repository.VerrouSiegeRepository;
 import com.transport.api.trajet.entity.Ligne;
 import com.transport.api.trajet.entity.Trajet;
@@ -33,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +55,8 @@ public class ReservationService {
     private final UserRepository userRepository;
     private final BagageRepository bagageRepository;
     private final TicketService ticketService;
+    private final TicketRepository ticketRepository;
+    private final TransactionRepository transactionRepository;
 
     @Value("${reservation.verrouillage.timeout-minutes:15}")
     private long timeoutMinutes;
@@ -414,7 +423,7 @@ public class ReservationService {
     }
 
     /**
-     * FA10 - Annulation d'une réservation
+     * FA10 - Annulation d'une réservation (par un agent)
      */
     @Transactional
     public String annulerReservation(Long reservationId, String motif) {
@@ -426,18 +435,33 @@ public class ReservationService {
         }
 
         if (reservation.getStatus() == StatutReservation.PAID) {
-            // Si payée, il faut gérer le remboursement
             throw new RuntimeException("Cette réservation est payée. Utilisez le remboursement.");
         }
 
+        // 1. Récupérer les sièges de la réservation
+        List<ReservationSiege> reservationSieges = reservationSiegeRepository.findByReservationId(reservationId);
+
+        // 2. Libérer les sièges (supprimer les verrous si existants)
+        for (ReservationSiege rs : reservationSieges) {
+            verrouSiegeRepository.deleteByTrajetIdAndSiegeId(reservation.getTrajetId(), rs.getSiegeId());
+        }
+
+        // 3. Supprimer les associations sièges-réservation
+        reservationSiegeRepository.deleteByReservationId(reservationId);
+
+        // 4. Annuler la réservation
         reservation.setStatus(StatutReservation.CANCELLED);
         reservation.setUpdatedAt(LocalDateTime.now());
         reservationRepository.save(reservation);
 
-        // Libérer les sièges
-        // TODO: Libérer les sièges
+        // 5. Annuler le ticket si existant
+        ticketRepository.findByReservationId(reservationId)
+                .ifPresent(ticket -> {
+                    ticket.setStatus(StatutTicket.CANCELLED);
+                    ticketRepository.save(ticket);
+                });
 
-        return "Réservation annulée avec succès";
+        return "Réservation annulée avec succès. Motif: " + motif;
     }
 
     private ReservationResponse buildReservationResponse(Reservation reservation) {
@@ -508,5 +532,86 @@ public class ReservationService {
         }
 
         return "Réservation annulée avec succès. Motif: " + request.getMotif();
+    }
+
+    /**
+     * Traitement d'une annulation (pour synchronisation hors ligne)
+     */
+    @Transactional
+    public Reservation annulerReservationSync(Long reservationId, String motif) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Réservation non trouvée"));
+
+        if (reservation.getStatus() == StatutReservation.CANCELLED) {
+            throw new RuntimeException("Cette réservation est déjà annulée");
+        }
+
+        if (reservation.getStatus() == StatutReservation.PAID) {
+            throw new RuntimeException("Cette réservation est payée. Utilisez le remboursement.");
+        }
+
+        reservation.setStatus(StatutReservation.CANCELLED);
+        reservation.setUpdatedAt(LocalDateTime.now());
+        reservationRepository.save(reservation);
+
+        // Libérer les sièges
+        List<ReservationSiege> reservationSieges = reservationSiegeRepository.findByReservationId(reservationId);
+        for (ReservationSiege rs : reservationSieges) {
+            verrouSiegeRepository.deleteByTrajetIdAndSiegeId(reservation.getTrajetId(), rs.getSiegeId());
+        }
+
+        // Annuler le ticket si existant
+        ticketRepository.findByReservationId(reservationId)
+                .ifPresent(ticket -> {
+                    ticket.setStatus(StatutTicket.CANCELLED);
+                    ticketRepository.save(ticket);
+                });
+
+        return reservation;
+    }
+
+    /**
+     * Traitement d'un remboursement (pour synchronisation hors ligne)
+     */
+    @Transactional
+    public Reservation rembourserReservationSync(Long reservationId, String motif) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Réservation non trouvée"));
+
+        if (reservation.getStatus() != StatutReservation.PAID) {
+            throw new RuntimeException("Seules les réservations payées peuvent être remboursées");
+        }
+
+        // Créer une transaction de remboursement
+        Transaction refundTransaction = new Transaction();
+        refundTransaction.setCompanyId(reservation.getCompanyId());
+        refundTransaction.setReservationId(reservation.getId());
+        refundTransaction.setAgenceId(null);
+        refundTransaction.setAmount(reservation.getTotalPrice().negate());
+        refundTransaction.setPaymentMode(ModePaiement.CASH);
+        refundTransaction.setMobileMoneyRef("REFUND-" + UUID.randomUUID().toString().substring(0, 8));
+        refundTransaction.setStatus(StatutTransaction.REFUNDED);
+        refundTransaction.setPaymentDate(LocalDateTime.now());
+        transactionRepository.save(refundTransaction);
+
+        // Mettre à jour la réservation
+        reservation.setStatus(StatutReservation.CANCELLED);
+        reservation.setUpdatedAt(LocalDateTime.now());
+        reservationRepository.save(reservation);
+
+        // Libérer les sièges
+        List<ReservationSiege> reservationSieges = reservationSiegeRepository.findByReservationId(reservationId);
+        for (ReservationSiege rs : reservationSieges) {
+            verrouSiegeRepository.deleteByTrajetIdAndSiegeId(reservation.getTrajetId(), rs.getSiegeId());
+        }
+
+        // Annuler le ticket
+        ticketRepository.findByReservationId(reservationId)
+                .ifPresent(ticket -> {
+                    ticket.setStatus(StatutTicket.CANCELLED);
+                    ticketRepository.save(ticket);
+                });
+
+        return reservation;
     }
 }

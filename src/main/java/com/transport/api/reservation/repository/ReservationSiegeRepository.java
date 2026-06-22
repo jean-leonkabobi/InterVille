@@ -23,4 +23,6 @@ public interface ReservationSiegeRepository extends JpaRepository<ReservationSie
 
     @Query("SELECT COUNT(rs) FROM ReservationSiege rs WHERE rs.reservationId IN (SELECT r.id FROM Reservation r WHERE r.trajetId = :trajetId AND r.status = 'PAID')")
     Long countReservedSeatsByTrajetId(@Param("trajetId") Long trajetId);
+
+    List<ReservationSiege> findByTrajetIdAndSiegeId(Long trajetId, Long siegeId);
 }
